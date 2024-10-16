@@ -1,21 +1,29 @@
-#!/usr/bin/env python
-
 import requests
+import re
+from urllib.parse import urljoin
 
-def request(url):
-    try:
-        return requests.get("https://" + url, timeout=5) 
-    except requests.exceptions.ConnectionError:
-        return None 
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}") 
 
-target_url = "google.com"
+target_url = "https://zsecurity.org"
+target_links = []
 
-with open("/home/kali/vs/crawler/wordlist.list", "r") as wordlist_file:
-    for line in wordlist_file:
-        word = line.strip()
-        test_url = word + "." + target_url
-        response = request(test_url)
-        if response:
-            print(test_url)
+def extract_links_from(url):
+    response = requests.get(url)
+    return re.findall('(?:href=")(.*?)"', response.content.decode('utf-8', errors='ignore'))
+
+
+def crawl(url):
+    href_links = extract_links_from(url)
+    for link in href_links:
+        link = urljoin(url, link)
+
+        if "#" in link:
+            link = link .split("#")[0]
+
+    
+        if target_url in link and link not in target_links:
+            target_links.append(link)
+            print(link)
+            crawl(link)
+
+
+crawl(target_url)
